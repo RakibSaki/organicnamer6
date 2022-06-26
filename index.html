@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrganicNamer 6</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js"></script>
+</head>
+<body>
+    <footer>Click atoms to select or deselect. Last created atom is selected by default. New atoms bond to selected atom.</footer>
+    <script>
+        let molecules = []
+        let selected
+        
+        let mouseOnAtom = false
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('click', event => {
+                if (!mouseOnAtom) {
+                    let newAtom = new Atom(event.clientX, event.clientY, selected)
+                    newAtom.draw()
+                    mouseOnAtom = true
+                    newAtom.element.addEventListener('mouseover', () => {
+                        mouseOnAtom = true
+                    })
+                    newAtom.element.addEventListener('mouseout', () => {
+                        mouseOnAtom = false
+                    })
+                    newAtom.element.addEventListener('click', () => {
+                        if (selected == newAtom) {
+                            selected.element.classList.remove('selected-atom')
+                            selected = null
+                            return
+                        }
+                        if (selected) {
+                            selected.element.classList.remove('selected-atom')
+                        }
+                        if (newAtom.bondsFull()) {
+                            return
+                        }
+                        selected = newAtom
+                        selected.element.classList.add('selected-atom')
+                    })
+                    if (!selected) {
+                        molecules.unshift(new Molecule)
+                        molecules[0].add(newAtom)
+                        selected = newAtom
+                        selected.element.classList.add('selected-atom')
+                        return
+                    }
+                    selected.element.classList.remove('selected-atom')
+                    selected = newAtom
+                    selected.element.classList.add('selected-atom')
+                }
+            })
+        })
+    </script>
+</body>
+</html>
