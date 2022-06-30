@@ -4,6 +4,8 @@ function Distance(distance, atom) {
 }
 
 function Chain(start, end) {
+    this.start = start
+    this.end = end
     this.length = start.distanceTo(end) + 1
     let atoms = []
     this.recordAtoms = () => {
@@ -116,6 +118,67 @@ function Molecule(atom) {
         }
         let longestChains = chooseBests(chains, chain => chain.length)
     }
+    this.nameBranchRoot = (fromAtom, startAtom) => {
+        /*
+        find atoms in branch
+        find terminal atoms
+        find largest chains between terminal atoms or from a terminal atom to startAtom
+        choose chain that is closest to start of branch
+        choose chain that has most subbranches
+        choose chains that starts subbranches first
+        choose chains that starts branches alphabetically lower
+        // above step requires recursive use of this function
+        repeat for next closest subbranches until
+            one chain is best
+            or all subbranches checked (chains symmetrical) in which case pick randomly
+        name of branch root is meth/eth/prop-yl or meth/eth/prop-position-yl if branch starts at mid of chain
+        */
+        let branchAtoms = []
+        for (let i = 0; i < atoms.length; i++) {
+            if (atoms[i].distanceTo(fromAtom) > atoms[i].distanceTo(startAtom)) {
+                branchAtoms.push(atoms[i])
+            }
+        }
+        let terminalAtoms = [startAtom]
+        for (let i = 0; i < branchAtoms.length; i++) {
+            if (branchAtoms[i].bonds == 1) {
+                terminalAtoms.push(branchAtoms[i])
+            }
+        }
+        let chains = []
+        for (let i = 0; i < terminalAtoms.length; i++) {
+            for (let j = 0; j < terminalAtoms.length; j++) {
+                let firstDistance = terminalAtoms[i].distanceTo(startAtom)
+                let secondDistance = startAtom.distanceTo(terminalAtoms[j])
+                let totalDistance = terminalAtoms[i].distanceTo(terminalAtoms[j])
+                // notice chain only if it includes start of branch and starts close to start of branch
+                if (firstDistance + secondDistance == totalDistance && firstDistance <= secondDistance) {
+                    chains.push(new Chain(terminalAtoms[i], terminalAtoms[j]))
+                }
+            }
+        }
+        // longest chains
+        chains = chooseBests(chains, chain => chain.length)
+        // chains starting closest to start of branch
+        chains = chooseBests(chains, chain => chain.end.distanceTo(startAtom))
+
+        for (let i = 0; i < chains.length; i++) {
+            chains[i].recordAtoms()
+        }
+        // chains with most subbranches
+        chains = chooseBest(chains, chain => {
+            let branches = 0
+            for (let i = 1; i < chain.atoms.length - 1; i++) {
+                if (chain.atoms[i].branches > 2) {
+                    for (let j = 0; j < chain.atoms[i].branchAtoms.length; j++) {
+                        if (chain.atoms[i].branchAtoms[j] != chain.atoms[i-1] && chain.atoms[i].branchAtoms[j] != chain.atoms[i+1] && chain.atoms[i].branchAtoms[j] != startAtom) {
+                            branches++
+                        }
+                    }
+                }
+            }
+        })
+    }
 }
 
 function chooseBests(list, goodness) {
@@ -134,3 +197,11 @@ function chooseBests(list, goodness) {
     }
     return bests
 }
+
+function nameBranch(fromAtom, startAtom) {
+    /*
+    nameBranchRoot
+    name of branch is ...position-nameBrach(subbranch)...+rootname
+    */
+}
+
